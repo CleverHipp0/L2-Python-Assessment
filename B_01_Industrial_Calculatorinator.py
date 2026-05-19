@@ -1,4 +1,8 @@
 import re
+from operator import index
+
+import pandas
+from tabulate import tabulate
 
 # Dictionaries
 # Mass (standard kg)
@@ -28,7 +32,7 @@ currency_dict = {
 }
 
 # Combine all dictionaries
-mega_dictionary = distance_dict | volume_dict | mass_dict | currency_dict
+mega_dictionary = distance_dict | volume_dict | mass_dict
 
 def statement_generator(statement, decoration):
     """Makes a simple statement look nice by adding a decoration to the beginning and end."""
@@ -69,8 +73,45 @@ def not_blank(inquiry):
         else:
             print("🚨 ERROR: This Field is required. Please enter a response. 🚨")
 
-def quantity_checker(inquiry):
+def int_checker(question, int_float=int, exit_code=""):
+    """Checks if a number is an integer or a float depending on the situation"""
+
+    # Error message set up
+    if int_float == int:
+        error = "🚨 ERROR: Please enter an integer (whole number) more than zero. 🚨"
+    else:
+        error = "🚨 ERROR: Please enter a number more than zero. 🚨"
+
+
+    while True:
+        # Strips unnecessary character
+        result = input(question).strip(r"\ ")
+
+        # If the exit code is entered, exit.
+        if result == exit_code and result != "":
+            return result
+
+
+        else:
+            # Converts result to int or float if possible, else it prints an error.
+            try:
+
+                if int_float(result) > 0:
+                    return int_float(result)
+                else:
+                    print(error)
+
+            except ValueError:
+                print(error)
+
+def quantity_checker(inquiry, mode=None):
     """This will separate units from amounts and check for valid units."""
+
+    # Select mode
+    if mode == "$":
+        used_dictionary = currency_dict
+    else:
+        used_dictionary = mega_dictionary
 
     # Blank to avoid error
     unit = 0
@@ -113,13 +154,13 @@ def quantity_checker(inquiry):
         unit_raw = inpt.replace(str(amount_raw[0]), "").strip()
 
         # Lets no unit slide and checks for valid unit.
-        if unit_raw == "" or unit_raw in mega_dictionary:
+        if unit_raw == "" or unit_raw in used_dictionary:
             unit = unit_raw
 
         else:
             print(unit_error)
-            for item in mega_dictionary:
-              print(f" - {item}")
+            for i in used_dictionary:
+              print(f" - {i}")
             continue
 
         if unit == "$":
@@ -130,17 +171,92 @@ def quantity_checker(inquiry):
         else:
             print(f"You entered {amount}{unit} | Amount: {amount} | Unit: {unit}")
 
-        return amount, unit
+        return float(amount), unit
+
+    # explicit return statement to avoid PEP8 error when we use 'continue' in the else statement above.
+    return None
+
+def panda_frame_maker(dictionary, mode=None):
+    """Generates a panda frame"""
+    # Pandas Data frame
+    frame = pandas.DataFrame(dictionary)
+
+    if mode == "recipie":
+        # Add total amount needed for all batches.
+        frame['Batch Amount'] = frame['Amount'] * batch_count
+
+    frame_string = tabulate(frame, headers="keys", tablefmt="psql")
+
+    return frame_string
+
+def table_confirmation(value, unit, table):
+    """Confirms you have entered all items into the table correctly"""
+    print(table)
+    confirm_continue = yes_no("Does this table look correct? ")
+
+    if confirm_continue == "no":
+        # Ask the user which row is incorrect
+        incorrect_row = int_checker("What row is incorrect (🔎 HINT: Use the number at the beginning of the row. 🔍)? ")
+
+        # Asks the user for new data
+        name_change = input("New Name: ")
+        new_unit_value = quantity_checker(f"Please enter the new amount and unit of {name_change} that you require per batch: ")
+
+        # Updates data
+        required_resources[incorrect_row] = not_blank(name_change)
+        value[incorrect_row] = new_unit_value[0]
+        unit[incorrect_row] = new_unit_value[1]
+        return value, unit
+
+    # if nothing needs to be changed exit code.
+    else:
+        return "xxx"
+
+
+def unit_converter(original_unit, original_amount):
+    while True:
+        # Avoid errors.
+        dictionary = {}
+
+        # Finds the dictionary to use.
+        if original_unit in mass_dict:
+            dictionary = mass_dict
+
+        elif original_unit in volume_dict:
+            dictionary = volume_dict
+
+        elif original_unit in distance_dict:
+            dictionary = distance_dict
+
+        elif original_unit in currency_dict:
+            dictionary = currency_dict
+
+        else:
+            dictionary = [""]
+
+        final = quantity_checker(f"Container size (eg. Flour is bought in 1.5kg bags so you would enter 1.5kg): ")
+
+        # Makes sure both units are in the same dictionary.
+        if final not in dictionary:
+            print("Conversion Fail")
+            continue
+
+        # Does the conversion.
+        modifier = dictionary[original_unit] / dictionary[final]
+
+        return original_amount * modifier, final
 
     # explicit return statement to avoid PEP8 error when we use 'continue' in the else statement above.
     return None
 
 
 # Main routine goes here.
+# Title
 print()
 statement_generator("Industrial Calculatorinator", "🏗️")
 print()
 
+# Instructions
 # Asks the user if the want to skip the instructions
 want_instructions = yes_no("Would you like to skip the instructions? ")
 
@@ -152,6 +268,16 @@ if want_instructions == "no":
 - Blah
 ''')
 
+
+# Batch Total, product name, how many batches
+product_name = input("What is the name of the product? ")
+per_batch = int_checker("How many does a batch make? ", float)
+# Replace this with an amount wanted??
+number_of_items = int_checker(f"How many would you like to make (NOT batches)? ", float)
+
+batch_count = number_of_items/per_batch
+
+# Set up
 # list of required resources
 required_resources = []
 
@@ -159,19 +285,26 @@ required_resources = []
 recipie_unit = []
 recipie_value = []
 
+recipie_dict = {
+    "Resource": required_resources,
+    "Amount": recipie_value,
+    "Unit": recipie_unit,
+    # "batch count": batch_count,
+}
+
+
 # Units and values that you buy in
 purchase_unit = []
 purchase_value = []
 
 
-
-# Loop
+# Loop getting the recipe resources.
 while True:
 
-    # Asks the question to loop.
+    # Asks the user the question to loop.
     print()
     print("Please enter the resource or enter 'xxx' to quit.")
-    new_resource = not_blank("ADD: ").lower().strip(r"\ ")
+    new_resource = not_blank("ADD: ").strip(r"\ ")
 
     # Makes sure they don't exit with less than one item entered.
     if new_resource == "xxx" and len(required_resources) < 2:
@@ -186,26 +319,69 @@ while True:
     if new_resource not in required_resources:
         required_resources.append(new_resource)
 
+    # Takes care of double ups.
     elif new_resource in required_resources:
         print(f"⚠️ CAUTION: You have already entered '{new_resource}'. It will not be added again. ⚠️")
 
+# Asks the user how much of each resource is required
 for resource in required_resources:
+
+    # Quantity checks gets unit + value
     unit_value = quantity_checker(f"Please enter the amount and unit of {resource} that you require per batch: ")
 
+    # Adds it to lists for pandas
+    recipie_value.append(unit_value[0])
+    recipie_unit.append(unit_value[1])
+
+# Pandas Data frame
+recipie_string = panda_frame_maker(recipie_dict, "recipie")
+
+# Confirm table 1
+while True:
+    new_recipie_data = table_confirmation(recipie_value, recipie_unit, recipie_string)
+
+    # Exit if nothing is wrong
+    if new_recipie_data == "xxx":
+        break
+
+    else:
+        recipie_value = new_recipie_data[0]
+        recipie_unit = new_recipie_data[1]
+
+        recipie_string = panda_frame_maker(recipie_dict, "recipie")
+
+
+# Figure out costs and economical adult things to do with money and taxes
+for item in required_resources:
 
 
 
+    # Unit conversion to accurately buy the correct amount
+    converter_data = unit_converter(recipie_unit[required_resources.index(item)], recipie_value[required_resources.index(item)])
+    amount_in_unit = converter_data[0]
+
+    # Container size
+    buying_quantity = converter_data[1]
+
+    # cost per container
+    quantity_cost = quantity_checker(f"How much does it cost to buy 1 container of {item} including GST (please add a $ or c for units)? ", "$")
 
 
+# Confirm table 2
+while True:
+    new_recipie_data = table_confirmation(recipie_value, recipie_unit, recipie_string)
 
+    # Exit if nothing is wrong
+    if new_recipie_data == "xxx":
+        break
 
+    else:
+        recipie_value = new_recipie_data[0]
+        recipie_unit = new_recipie_data[1]
 
+        recipie_string = panda_frame_maker(recipie_dict)
 
-
-
-
-
-
+# Super PANDA
 
 
 
