@@ -1,6 +1,6 @@
 import re
 from operator import index
-
+import math
 import pandas
 from tabulate import tabulate
 
@@ -189,7 +189,7 @@ def panda_frame_maker(dictionary, mode=None):
 
     return frame_string
 
-def table_confirmation(value, unit, table):
+def table_confirmation(value, unit, table, mode="recipie"):
     """Confirms you have entered all items into the table correctly"""
     print(table)
     confirm_continue = yes_no("Does this table look correct? ")
@@ -198,12 +198,18 @@ def table_confirmation(value, unit, table):
         # Ask the user which row is incorrect
         incorrect_row = int_checker("What row is incorrect (🔎 HINT: Use the number at the beginning of the row. 🔍)? ")
 
-        # Asks the user for new data
-        name_change = input("New Name: ")
-        new_unit_value = quantity_checker(f"Please enter the new amount and unit of {name_change} that you require per batch: ")
+
+
+        if mode == "recipie":
+            # Asks the user for new data
+            name_change = input("New Name: ")
+            new_unit_value = quantity_checker(f"Please enter the new amount and unit of {name_change} that you require per batch: ")
+            required_resources[incorrect_row] = not_blank(name_change)
+        else:
+            new_unit_value_raw = unit_converter(unit, value)
+            new_unit_value = new_unit_value_raw[1]
 
         # Updates data
-        required_resources[incorrect_row] = not_blank(name_change)
         value[incorrect_row] = new_unit_value[0]
         unit[incorrect_row] = new_unit_value[1]
         return value, unit
@@ -214,6 +220,7 @@ def table_confirmation(value, unit, table):
 
 
 def unit_converter(original_unit, original_amount):
+    """Converts from one unit to another"""
     while True:
         # Avoid errors.
         dictionary = {}
@@ -237,12 +244,12 @@ def unit_converter(original_unit, original_amount):
         final = quantity_checker(f"Container size (eg. Flour is bought in 1.5kg bags so you would enter 1.5kg): ")
 
         # Makes sure both units are in the same dictionary.
-        if final not in dictionary:
+        if final[1] not in dictionary and final[1] != "":
             print("Conversion Fail")
             continue
 
         # Does the conversion.
-        modifier = dictionary[original_unit] / dictionary[final]
+        modifier = dictionary[final[1]]
 
         return original_amount * modifier, final
 
@@ -281,6 +288,14 @@ batch_count = number_of_items/per_batch
 # list of required resources
 required_resources = []
 
+# Avoid errors
+quantity_cost = []
+need_to_use = []
+cost_per_product = []
+buying_quantity = []
+need_to_buy = 0
+resource_buying_cost = []
+
 # Start of recipie units and vales
 recipie_unit = []
 recipie_value = []
@@ -296,6 +311,7 @@ recipie_dict = {
 # Units and values that you buy in
 purchase_unit = []
 purchase_value = []
+
 
 
 # Loop getting the recipe resources.
@@ -358,18 +374,26 @@ for item in required_resources:
 
     # Unit conversion to accurately buy the correct amount
     converter_data = unit_converter(recipie_unit[required_resources.index(item)], recipie_value[required_resources.index(item)])
+    print(converter_data)
     amount_in_unit = converter_data[0]
 
     # Container size
-    buying_quantity = converter_data[1]
+    buying_quantity.append(converter_data[1])
 
     # cost per container
-    quantity_cost = quantity_checker(f"How much does it cost to buy 1 container of {item} including GST (please add a $ or c for units)? ", "$")
+    quantity_cost.append(quantity_checker(f"How much does it cost to buy 1 container of {item} including GST (please add a $ or c for units)? ", "$"))
 
+product_dict = {
+    "required resource", required_resources,
+    "quantity bought in", buying_quantity,
+    "cost per container", quantity_cost,
+}
+
+product_string = panda_frame_maker(product_dict)
 
 # Confirm table 2
 while True:
-    new_recipie_data = table_confirmation(recipie_value, recipie_unit, recipie_string)
+    new_recipie_data = table_confirmation(buying_quantity, recipie_unit, product_string)
 
     # Exit if nothing is wrong
     if new_recipie_data == "xxx":
@@ -379,12 +403,41 @@ while True:
         recipie_value = new_recipie_data[0]
         recipie_unit = new_recipie_data[1]
 
-        recipie_string = panda_frame_maker(recipie_dict)
+        product_string = panda_frame_maker(recipie_dict)
 
 # Super PANDA
+# To avoid errors
+recipie_amount_plus_unit = 0
+product_amount = []
 
+# Adds the unit and amount together
+for resource in required_resources:
+    recipie_amount_plus_unit = recipie_value[required_resources.index(resource)] + recipie_unit[required_resources.index(resource)]
 
+    # Value for one batch
+    product_amount_raw = recipie_value[required_resources.index(resource)] / per_batch
+    cost_per_product = product_amount_raw * quantity_cost[0]
 
+    # Calculate how much is needed tobe used
+    need_to_use = str(recipie_value * batch_count) + recipie_unit
+
+    number_to_buy = math.ceil(recipie_value[required_resources.index(resource)] / buying_quantity[0])
+    need_to_buy = f"{number_to_buy} x {buying_quantity[0]}{buying_quantity[1]}"
+
+    resource_buying_cost = quantity_cost[1] + str(number_to_buy * cost_per_product)
+
+# Dictionary for panda
+super_panda_dictionary = {
+    "Required Resource", required_resources,
+    "Amount/Batch", recipie_amount_plus_unit,
+    "Value of material used to make one product", cost_per_product,
+    "You will need to use", need_to_use,
+    "You will need to buy", need_to_buy,
+    "How much it will cost to buy all of the resources", resource_buying_cost
+}
+
+super_panda_string = panda_frame_maker(super_panda_dictionary)
+print(super_panda_string)
 
 
 
