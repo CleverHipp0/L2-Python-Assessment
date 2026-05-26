@@ -1,5 +1,4 @@
 import re
-from operator import index
 import math
 import pandas
 from tabulate import tabulate
@@ -247,9 +246,14 @@ def unit_converter(original_unit, original_amount):
         if final[1] not in dictionary and final[1] != "":
             print("Conversion Fail")
             continue
+        elif final[1] == "":
+            modifier = 1
 
-        # Does the conversion.
-        modifier = dictionary[final[1]]
+        else:
+            # Does the conversion.
+            test_variable = final[1]
+            print("test variable", test_variable)
+            modifier = dictionary[final[1]]
 
         return original_amount * modifier, final
 
@@ -379,14 +383,16 @@ for item in required_resources:
 
     # Container size
     buying_quantity.append(converter_data[1])
+    print(buying_quantity)
 
     # cost per container
-    quantity_cost.append(quantity_checker(f"How much does it cost to buy 1 container of {item} including GST (please add a $ or c for units)? ", "$"))
+    quantity_cost_raw = quantity_checker(f"How much does it cost to buy 1 container of {item} including GST (please add a $ or c for units)? ", "$")
+    quantity_cost.append(quantity_cost_raw[0])
 
 product_dict = {
-    "required resource", required_resources,
-    "quantity bought in", buying_quantity,
-    "cost per container", quantity_cost,
+    "required resource": required_resources,
+    "quantity bought in": buying_quantity,
+    "cost per container": quantity_cost,
 }
 
 product_string = panda_frame_maker(product_dict)
@@ -412,28 +418,33 @@ product_amount = []
 
 # Adds the unit and amount together
 for resource in required_resources:
-    recipie_amount_plus_unit = recipie_value[required_resources.index(resource)] + recipie_unit[required_resources.index(resource)]
+    resource_index = required_resources.index(resource)
+
+    recipie_amount_plus_unit = str(recipie_value[resource_index]) + recipie_unit[resource_index]
 
     # Value for one batch
-    product_amount_raw = recipie_value[required_resources.index(resource)] / per_batch
+    product_amount_raw = recipie_value[resource_index] / per_batch
     cost_per_product = product_amount_raw * quantity_cost[0]
 
     # Calculate how much is needed tobe used
-    need_to_use = str(recipie_value * batch_count) + recipie_unit
+    need_to_use = str(recipie_value[resource_index] * batch_count) + recipie_unit[resource_index]
 
-    number_to_buy = math.ceil(recipie_value[required_resources.index(resource)] / buying_quantity[0])
-    need_to_buy = f"{number_to_buy} x {buying_quantity[0]}{buying_quantity[1]}"
 
-    resource_buying_cost = quantity_cost[1] + str(number_to_buy * cost_per_product)
+    # [(1, 2), (1, 2)]
+    print(buying_quantity)
+    number_to_buy = math.ceil(recipie_value[resource_index] / buying_quantity[resource_index][0])
+    need_to_buy = f"{number_to_buy} x {buying_quantity[resource_index][0]}{buying_quantity[resource_index][1]}"
+
+    resource_buying_cost = f"{quantity_cost[resource_index]} x {number_to_buy * cost_per_product}"
 
 # Dictionary for panda
 super_panda_dictionary = {
-    "Required Resource", required_resources,
-    "Amount/Batch", recipie_amount_plus_unit,
-    "Value of material used to make one product", cost_per_product,
-    "You will need to use", need_to_use,
-    "You will need to buy", need_to_buy,
-    "How much it will cost to buy all of the resources", resource_buying_cost
+    "Required Resource": required_resources,
+    "Amount/Batch": recipie_amount_plus_unit,
+    "Value of material used to make one product": cost_per_product,
+    "You will need to use": need_to_use,
+    "You will need to buy": need_to_buy,
+    "How much it will cost to buy all of the resources": resource_buying_cost,
 }
 
 super_panda_string = panda_frame_maker(super_panda_dictionary)
