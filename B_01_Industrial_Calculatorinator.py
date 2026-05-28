@@ -297,8 +297,9 @@ quantity_cost = []
 need_to_use = []
 cost_per_product = []
 buying_quantity = []
-need_to_buy = 0
+need_to_buy = []
 resource_buying_cost = []
+number_to_buy = []
 
 # Start of recipie units and vales
 recipie_unit = []
@@ -413,33 +414,41 @@ while True:
 
 # Super PANDA
 # To avoid errors
-recipie_amount_plus_unit = 0
+recipie_amount_plus_unit = []
 product_amount = []
+required_resources = list(reversed(required_resources))
+
 
 # Adds the unit and amount together
 for resource in required_resources:
     resource_index = required_resources.index(resource)
 
-    recipie_amount_plus_unit = str(recipie_value[resource_index]) + recipie_unit[resource_index]
+    recipie_amount_plus_unit.append(str(recipie_value[resource_index]) + recipie_unit[resource_index])
 
     # Value for one batch
     product_amount_raw = recipie_value[resource_index] / per_batch
-    cost_per_product = product_amount_raw * quantity_cost[0]
+    cost_per_product.append(product_amount_raw / quantity_cost[0])
 
     # Calculate how much is needed tobe used
-    need_to_use = str(recipie_value[resource_index] * batch_count) + recipie_unit[resource_index]
+    need_to_use_raw = recipie_value[resource_index] * batch_count
+    need_to_use.append(str(need_to_use_raw) + recipie_unit[resource_index])
 
-
-    # [(1, 2), (1, 2)]
     print(buying_quantity)
-    number_to_buy = math.ceil(recipie_value[resource_index] / buying_quantity[resource_index][0])
-    need_to_buy = f"{number_to_buy} x {buying_quantity[resource_index][0]}{buying_quantity[resource_index][1]}"
 
-    resource_buying_cost = f"{quantity_cost[resource_index]} x {number_to_buy * cost_per_product}"
+    number_to_buy.append(math.ceil(math.ceil(need_to_use_raw / buying_quantity[resource_index][0])))
+    print(f"number to buy = {math.ceil(need_to_use_raw / buying_quantity[resource_index][0])}")
+
+
+    print(number_to_buy)
+    print(resource_index)
+
+    need_to_buy.append(f"{number_to_buy[resource_index]} x {buying_quantity[resource_index][0]}{buying_quantity[resource_index][1]}")
+
+    resource_buying_cost.append(f"{number_to_buy[resource_index]} x ${quantity_cost[resource_index]}")
 
 # Dictionary for panda
 super_panda_dictionary = {
-    "Required Resource": required_resources,
+    "Required Resource": list(reversed(required_resources)),
     "Amount/Batch": recipie_amount_plus_unit,
     "Value of material used to make one product": cost_per_product,
     "You will need to use": need_to_use,
