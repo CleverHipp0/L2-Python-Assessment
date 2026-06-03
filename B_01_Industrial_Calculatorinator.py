@@ -223,6 +223,7 @@ def unit_converter(original_unit, original_amount):
     while True:
         # Avoid errors.
         dictionary = {}
+        standard_unit = 1
 
         # Finds the dictionary to use.
         if original_unit in mass_dict:
@@ -250,12 +251,13 @@ def unit_converter(original_unit, original_amount):
             modifier = 1
 
         else:
+
+            standard_unit = original_amount / dictionary[original_unit]
+            print(standard_unit)
             # Does the conversion.
-            test_variable = final[1]
-            print("test variable", test_variable)
             modifier = dictionary[final[1]]
 
-        return original_amount * modifier, final
+        return standard_unit * modifier, final
 
     # explicit return statement to avoid PEP8 error when we use 'continue' in the else statement above.
     return None
@@ -300,6 +302,7 @@ buying_quantity = []
 need_to_buy = []
 resource_buying_cost = []
 number_to_buy = []
+amount_in_unit = []
 
 # Start of recipie units and vales
 recipie_unit = []
@@ -323,13 +326,12 @@ purchase_value = []
 while True:
 
     # Asks the user the question to loop.
-    print()
-    print("Please enter the resource or enter 'xxx' to quit.")
+    print("\nPlease enter the resource or enter 'xxx' to continue.")
     new_resource = not_blank("ADD: ").strip(r"\ ")
 
     # Makes sure they don't exit with less than one item entered.
     if new_resource == "xxx" and len(required_resources) < 2:
-        print("🚨 ERROR: There are too few resources. Please enter 2 or more resources or quit. 🚨")
+        print("🚨 ERROR: There are too few resources. Please enter 2 or more resources. 🚨")
         continue
 
     # Exit code.
@@ -348,7 +350,7 @@ while True:
 for resource in required_resources:
 
     # Quantity checks gets unit + value
-    unit_value = quantity_checker(f"Please enter the amount and unit of {resource} that you require per batch: ")
+    unit_value = quantity_checker(f"\nPlease enter the amount and unit of {resource} that you require per batch: ")
 
     # Adds it to lists for pandas
     recipie_value.append(unit_value[0])
@@ -379,12 +381,10 @@ for item in required_resources:
 
     # Unit conversion to accurately buy the correct amount
     converter_data = unit_converter(recipie_unit[required_resources.index(item)], recipie_value[required_resources.index(item)])
-    print(converter_data)
-    amount_in_unit = converter_data[0]
+    amount_in_unit.append(converter_data[0])
 
     # Container size
     buying_quantity.append(converter_data[1])
-    print(buying_quantity)
 
     # cost per container
     quantity_cost_raw = quantity_checker(f"How much does it cost to buy 1 container of {item} including GST (please add a $ or c for units)? ", "$")
@@ -416,7 +416,6 @@ while True:
 # To avoid errors
 recipie_amount_plus_unit = []
 product_amount = []
-required_resources = list(reversed(required_resources))
 
 
 # Adds the unit and amount together
@@ -426,34 +425,35 @@ for resource in required_resources:
     recipie_amount_plus_unit.append(str(recipie_value[resource_index]) + recipie_unit[resource_index])
 
     # Value for one batch
+    print()
     product_amount_raw = recipie_value[resource_index] / per_batch
-    cost_per_product.append(product_amount_raw / quantity_cost[0])
+    print(f"Product Amount Raw: {recipie_value[resource_index]} / {per_batch} = {product_amount_raw}")
+    cost_per_product.append(((recipie_value[resource_index] / amount_in_unit[resource_index]) * quantity_cost[resource_index]))
+    print(f"Cost per product: ({recipie_value[resource_index]} / {amount_in_unit[resource_index]}) x {quantity_cost[resource_index]}")
 
     # Calculate how much is needed tobe used
     need_to_use_raw = recipie_value[resource_index] * batch_count
     need_to_use.append(str(need_to_use_raw) + recipie_unit[resource_index])
 
-    print(buying_quantity)
-
-    number_to_buy.append(math.ceil(math.ceil(need_to_use_raw / buying_quantity[resource_index][0])))
-    print(f"number to buy = {math.ceil(need_to_use_raw / buying_quantity[resource_index][0])}")
+    print(f"Number to buy: {recipie_value[resource_index]} / {per_batch * recipie_value[resource_index]} = {math.ceil(recipie_value[resource_index] / (per_batch * recipie_value[resource_index]))}")
+    number_to_buy.append(math.ceil(recipie_value[resource_index] / (per_batch * recipie_value[resource_index])))
 
 
+    buying_quantity_reversed = list(reversed(buying_quantity))
+    need_to_buy.append(f"{number_to_buy[resource_index]} x {buying_quantity_reversed[resource_index][0]}{buying_quantity_reversed[resource_index][1]}")
     print(number_to_buy)
-    print(resource_index)
 
-    need_to_buy.append(f"{number_to_buy[resource_index]} x {buying_quantity[resource_index][0]}{buying_quantity[resource_index][1]}")
+    resource_buying_cost.append(f"{number_to_buy[resource_index]} x ${list(reversed(quantity_cost))[resource_index]}")
 
-    resource_buying_cost.append(f"{number_to_buy[resource_index]} x ${quantity_cost[resource_index]}")
 
 # Dictionary for panda
 super_panda_dictionary = {
-    "Required Resource": list(reversed(required_resources)),
+    "Required Resource": required_resources,
     "Amount/Batch": recipie_amount_plus_unit,
     "Value of material used to make one product": cost_per_product,
     "You will need to use": need_to_use,
-    "You will need to buy": need_to_buy,
-    "How much it will cost to buy all of the resources": resource_buying_cost,
+    "You will need to buy": list(reversed(need_to_buy)),
+    "How much it will cost to buy all of the resources": list(reversed(resource_buying_cost)),
 }
 
 super_panda_string = panda_frame_maker(super_panda_dictionary)
