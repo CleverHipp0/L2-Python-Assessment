@@ -223,7 +223,9 @@ def unit_converter(original_unit, original_amount):
     while True:
         # Avoid errors.
         dictionary = {}
-        standard_unit = 1
+        standard_unit_original = 1
+        standard_unit_final = 1
+        mission_impossible_name_variable = 0
 
         # Finds the dictionary to use.
         if original_unit in mass_dict:
@@ -251,13 +253,16 @@ def unit_converter(original_unit, original_amount):
             modifier = 1
 
         else:
+            # Finds out how much it will cost
+            standard_unit_original = original_amount / dictionary[original_unit]
+            standard_unit_final = final[0] / dictionary[final[1]]
 
-            standard_unit = original_amount / dictionary[original_unit]
-            print(standard_unit)
+            mission_impossible_name_variable = standard_unit_original/standard_unit_final
+            print(f"{standard_unit_original}/{standard_unit_final} = {mission_impossible_name_variable}")
             # Does the conversion.
             modifier = dictionary[final[1]]
 
-        return standard_unit * modifier, final
+        return standard_unit_original * modifier, final, mission_impossible_name_variable
 
     # explicit return statement to avoid PEP8 error when we use 'continue' in the else statement above.
     return None
@@ -295,14 +300,23 @@ batch_count = number_of_items/per_batch
 required_resources = []
 
 # Avoid errors
+# List of 1 container worth of blah
 quantity_cost = []
+# Amount of resource needed for 1 blah
 need_to_use = []
+# Cost to make one portion of blah
 cost_per_product = []
+# This is a tuple
 buying_quantity = []
+# How many containers of blah needed
 need_to_buy = []
 resource_buying_cost = []
 number_to_buy = []
+buying_standard_unit = []
 amount_in_unit = []
+
+# Change this name please please please
+the_bane_of_my_existence = []
 
 # Start of recipie units and vales
 recipie_unit = []
@@ -312,7 +326,6 @@ recipie_dict = {
     "Resource": required_resources,
     "Amount": recipie_value,
     "Unit": recipie_unit,
-    # "batch count": batch_count,
 }
 
 
@@ -386,6 +399,9 @@ for item in required_resources:
     # Container size
     buying_quantity.append(converter_data[1])
 
+    # I know what this does (standard o/ standard f) but idk a name
+    the_bane_of_my_existence.append(converter_data[2])
+
     # cost per container
     quantity_cost_raw = quantity_checker(f"How much does it cost to buy 1 container of {item} including GST (please add a $ or c for units)? ", "$")
     quantity_cost.append(quantity_cost_raw[0])
@@ -428,8 +444,8 @@ for resource in required_resources:
     print()
     product_amount_raw = recipie_value[resource_index] / per_batch
     print(f"Product Amount Raw: {recipie_value[resource_index]} / {per_batch} = {product_amount_raw}")
-    cost_per_product.append(((recipie_value[resource_index] / amount_in_unit[resource_index]) * quantity_cost[resource_index]))
-    print(f"Cost per product: ({recipie_value[resource_index]} / {amount_in_unit[resource_index]}) x {quantity_cost[resource_index]}")
+    cost_per_product.append(the_bane_of_my_existence[resource_index] * quantity_cost[resource_index])
+    print(f"Cost per product: ({the_bane_of_my_existence}) x {quantity_cost[resource_index]}")
 
     # Calculate how much is needed tobe used
     need_to_use_raw = recipie_value[resource_index] * batch_count
