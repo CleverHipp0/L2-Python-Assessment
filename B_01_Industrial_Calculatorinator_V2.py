@@ -97,7 +97,6 @@ def int_checker(question, int_float=int, exit_c=""):
             except ValueError:
                 print(error)
 
-
 def quantity_checker(inquiry, mode=None):
     """This will separate units from amounts and check for valid units."""
     # Sets up an error for units, floats and numbers.
@@ -163,7 +162,7 @@ def quantity_checker(inquiry, mode=None):
 # Main Routine.
 # Generates the title as a string.
 heading = statement_generator("Industrial Calculatorinator 2.0", "🏗️")
-print(heading)
+print(f"\n{heading}\n")
 
 # Asks the user if they would like to skip the instructions.
 skip_instructions = yes_no("Would you like to skip the instructions? ")
@@ -178,7 +177,7 @@ blah
 per_batch = int_checker("\nHow many products does one batch make? ")
 
 # Asks the user how many products they would like to make. per_batch{int}
-product_count = int_checker("\nHow many products would you like to make? ")
+product_count = int_checker("How many products would you like to make? ")
 
 # Calculates the multiplier to multiply the required resources by.
 product_multiplier = product_count / per_batch
@@ -189,6 +188,11 @@ required_resources = []
 
 # Empty variable before loop to exit the loop is "" is entered.
 exit_code = 1
+
+# Spacer between the "how many products" question and the Part 1 header.
+print()
+# Small header for Part 1 of the program.
+print(statement_generator("Part 1", "🎬"))
 
 # Loop to ask how many required resources.
 while exit_code != "":
@@ -215,7 +219,7 @@ while exit_code != "":
         required_resources.append(required_resource_raw)
 
 
-# Set up the list for the amount of resource needed per product. I need this to avoid errors. Tuples{No}.
+# Set up the list for the amount of resource needed per product. I need this to avoid errors. Tuples{No}. amount_per_product{int}
 amount_per_product = []
 # Set up the list for the unit of resource needed per product. I need this to avoid errors. Tuples{No}. required_resource{str}
 required_resource_unit = []
@@ -224,16 +228,22 @@ required_resource_unit = []
 for resource in required_resources:
 
     # Asks how much of the resource is required per batch.
-    print(f"\nHow much of {resource} do you need per batch")
+    print(f"\nHow much of {resource} do you need per batch?")
 
-    # This is a list ⬇. amount{float} = [0], unit{str} = [1].
-    resource_quantity_data = quantity_checker(f"AMOUNT:")
+    # This is a list ⬇. amount{float} = [0], unit{str} = [1]. It finds the amount and unit for the resource per batch.
+    resource_quantity_data = quantity_checker(f"AMOUNT: ")
 
     # This finds out how much of the resource is required for one product and adds it to the list. amount{float}/per_batch{int}
     amount_per_product.append(resource_quantity_data[0]/per_batch)
+    # This finds out the unit of the resource needed and adds it to a list. unit{str}
+    required_resource_unit.append(resource_quantity_data[1])
 
+# Spacer between the "how much" question and the Part 2 header.
+print()
+# A simple header for Part 2 of the program.
+print(statement_generator("Part 2", "🎬"))
 
-
+# We need to find the
 
 
 
