@@ -99,30 +99,30 @@ def quantity_checker(inquiry, mode=None):
     return None
 
 
-def conversion_calculator(quantity_per_product, first_unit, resource):
+def conversion_calculator(quantity_per_product, product_unit, resource):
     """This takes in the quantity per product and the first unit
     and converts it to the final unit that it asks for."""
 
     # Avoid errors.
-    dictionary = {}
+    product_unit_dictionary = {}
 
     # Finds the dictionary to use.
-    if first_unit in mass_dict:
-        dictionary = mass_dict
+    if product_unit in mass_dict:
+        product_unit_dictionary = mass_dict
 
-    elif first_unit in volume_dict:
-        dictionary = volume_dict
+    elif product_unit in volume_dict:
+        product_unit_dictionary = volume_dict
 
-    elif first_unit in distance_dict:
-        dictionary = distance_dict
+    elif product_unit in distance_dict:
+        product_unit_dictionary = distance_dict
 
     # If the user doesn't enter a unit, let the function continue.
-    elif first_unit == "":
-        dictionary = ""
+    elif product_unit == "":
+        product_unit_dictionary = {}
 
-    # Error if somehow the first unit is invalid. This should never be triggered.
+    # Error if somehow the product unit is invalid. This should never be triggered.
     else:
-        print(f"🚨 CODE ERROR - LINE 124: First unit: {first_unit}, is not a valid unit. 🚨")
+        print(f"🚨 CODE ERROR - LINE 124: Product unit: {product_unit}, is not a valid unit. 🚨")
 
     # Loop until the user enters a valid answer for "What is the container size for {resource}? "
     while True:
@@ -132,23 +132,38 @@ def conversion_calculator(quantity_per_product, first_unit, resource):
         # This is a list ⬇. amount{float} = [0], unit{str} = [1]. It finds the amount and unit for the container size.
         container_size_data = quantity_checker("SIZE: ")
 
-        # Separate container_size_data into
+        # Separate container_size_data into value and unit.
+        container_size_value = container_size_data[0]
+        container_size_unit = container_size_data[1]
 
-        # Makes sure both units are in the same dictionary.
-        if final not in dictionary:
-            print("Conversion Fail")
+
+        # Makes sure that the container size unit is in the same dictionary as the product unit.
+        if container_size_unit not in product_unit_dictionary and container_size_unit != product_unit:
+            print(f"🚨 ERROR: The unit {container_size_unit} is not of the same unit type as {product_unit}. 🚨")
             continue
 
+        # This is a small status update.
         else:
-            print("Awesome")
+            print("Converting...")
 
-        # Conversion amount.
-        amount_a = abs(float(input("Number: ")))
+        # quantity_per_product -> container size unit. This does the conversion.
+        # Converts the quantity per product to the standard unit (where one is in the dictionary).
+        quantity_per_product_standard_unit = quantity_per_product * product_unit_dictionary[product_unit]
+        # quantity_per_product{float} * product_unit_dictionary[container_size_unit{str}]{float}
+        quantity_per_product_in_unit = quantity_per_product_standard_unit * product_unit_dictionary[container_size_unit]
 
-        # Does the conversion.
-        modifier = dictionary[initial] / dictionary[final]
-        print(modifier)
-        print(amount_a * modifier)
-        print()
+        print(f"Quantity per product standard unit = {quantity_per_product_standard_unit} = {quantity_per_product} / {product_unit_dictionary[product_unit]} | product_unit = {product_unit}")
+        print(f"Quantity per product in unit = {quantity_per_product_in_unit} = {quantity_per_product_standard_unit} * {product_unit_dictionary[container_size_unit]} | container_size_unit = {container_size_unit}")
 
+        # Returns container_size_data {tuple (amount{float}, unit{str})} and quantity_per_product_in_unit{float}.
+        return container_size_data, quantity_per_product_in_unit
 
+    # Explict return none because of a weird error.
+    return None
+
+# Main routine
+while True:
+
+    test_resource = input("Resource: ")
+    test_data = quantity_checker("Test Case:")
+    print(conversion_calculator(test_data[0], test_data[1], test_resource))
