@@ -142,18 +142,24 @@ def conversion_calculator(quantity_per_product, product_unit, resource):
             print(f"🚨 ERROR: The unit {container_size_unit} is not of the same unit type as {product_unit}. 🚨")
             continue
 
+        # If the container size unit and the product unit are the same, skip the conversion.
+        elif container_size_unit == product_unit:
+            quantity_per_product_in_unit = product_unit
+            print("Skipping conversion...")
+
+
         # This is a small status update.
         else:
             print("Converting...")
 
-        # quantity_per_product -> container size unit. This does the conversion.
-        # Converts the quantity per product to the standard unit (where one is in the dictionary).
-        quantity_per_product_standard_unit = quantity_per_product * product_unit_dictionary[product_unit]
-        # quantity_per_product{float} * product_unit_dictionary[container_size_unit{str}]{float}
-        quantity_per_product_in_unit = quantity_per_product_standard_unit * product_unit_dictionary[container_size_unit]
+            # quantity_per_product -> container size unit. This does the conversion.
+            # Converts the quantity per product to the standard unit (where one is in the dictionary).
+            quantity_per_product_standard_unit = quantity_per_product * product_unit_dictionary[product_unit]
+            # quantity_per_product{float} * product_unit_dictionary[container_size_unit{str}]{float}
+            quantity_per_product_in_unit = quantity_per_product_standard_unit / product_unit_dictionary[container_size_unit]
 
-        print(f"Quantity per product standard unit = {quantity_per_product_standard_unit} = {quantity_per_product} / {product_unit_dictionary[product_unit]} | product_unit = {product_unit}")
-        print(f"Quantity per product in unit = {quantity_per_product_in_unit} = {quantity_per_product_standard_unit} * {product_unit_dictionary[container_size_unit]} | container_size_unit = {container_size_unit}")
+            print(f"Quantity per product standard unit = {quantity_per_product_standard_unit} = {quantity_per_product} * {product_unit_dictionary[product_unit]} | product_unit = {product_unit}")
+            print(f"Quantity per product in unit = {quantity_per_product_in_unit} = {quantity_per_product_standard_unit} / {product_unit_dictionary[container_size_unit]} | container_size_unit = {container_size_unit}")
 
         # Returns container_size_data {tuple (amount{float}, unit{str})} and quantity_per_product_in_unit{float}.
         return container_size_data, quantity_per_product_in_unit
@@ -165,5 +171,5 @@ def conversion_calculator(quantity_per_product, product_unit, resource):
 while True:
 
     test_resource = input("Resource: ")
-    test_data = quantity_checker("Test Case:")
+    test_data = quantity_checker("Test Case: ")
     print(conversion_calculator(test_data[0], test_data[1], test_resource))
