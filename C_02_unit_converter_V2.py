@@ -43,6 +43,8 @@ def quantity_checker(inquiry, mode=None):
     unit_error = "🚨 ERROR: This unit is not supported. Please enter a valid unit from this list. 🚨"
     float_error = "🚨 ERROR: No Number was entered. Make sure to enter a number. 🚨"
     number_error = "🚨 ERROR: Too Many Numbers were entered. Make sure there are no spaces between numbers. 🚨"
+    negative_error = "🚨 ERROR: You entered a negative number. Please do not enter negative numbers. 🚨"
+
 
     # THIS WORKS DO NOT TOUCH
     # Finds the digits within the input.
@@ -58,7 +60,7 @@ def quantity_checker(inquiry, mode=None):
 
         # Make sure there is a number entered.
         if len(amount_raw) == 1:
-            amount = abs(float(amount_raw[0]))
+            amount = float(amount_raw[0])
             print(amount)
 
         # Number error if too many numbers are entered
@@ -70,6 +72,12 @@ def quantity_checker(inquiry, mode=None):
         else:
             print(float_error)
             continue
+
+        # Make sure that -ve numbers aren't entered
+        if amount < 0:
+            print(negative_error)
+            continue
+
 
         # Remove the value from the unit
         unit_raw = inpt.replace(str(amount_raw[0]), "").strip()
@@ -97,7 +105,6 @@ def quantity_checker(inquiry, mode=None):
 
     # explicit return statement to avoid PEP8 error when we use 'continue' in the else statement above.
     return None
-
 
 def conversion_calculator(quantity_per_product, product_unit, resource):
     """This takes in the quantity per product and the first unit
@@ -144,7 +151,7 @@ def conversion_calculator(quantity_per_product, product_unit, resource):
 
         # If the container size unit and the product unit are the same, skip the conversion.
         elif container_size_unit == product_unit:
-            quantity_per_product_in_unit = product_unit
+            quantity_per_product_in_unit = quantity_per_product
             print("Skipping conversion...")
 
 
