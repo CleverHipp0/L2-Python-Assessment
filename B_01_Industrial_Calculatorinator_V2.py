@@ -3,6 +3,8 @@ import math
 import pandas
 from tabulate import tabulate
 
+
+
 # Dictionaries
 # Mass (standard kg)
 mass_dict = {
@@ -103,6 +105,8 @@ def quantity_checker(inquiry, mode=None):
     unit_error = "🚨 ERROR: This unit is not supported. Please enter a valid unit from this list. 🚨"
     float_error = "🚨 ERROR: No Number was entered. Make sure to enter a number. 🚨"
     number_error = "🚨 ERROR: Too Many Numbers were entered. Make sure there are no spaces between numbers. 🚨"
+    negative_error = "🚨 ERROR: You entered a negative number. Please do not enter negative numbers. 🚨"
+
 
     # THIS WORKS DO NOT TOUCH
     # Finds the digits within the input.
@@ -118,7 +122,7 @@ def quantity_checker(inquiry, mode=None):
 
         # Make sure there is a number entered.
         if len(amount_raw) == 1:
-            amount = abs(float(amount_raw[0]))
+            amount = float(amount_raw[0])
             print(amount)
 
         # Number error if too many numbers are entered
@@ -130,6 +134,12 @@ def quantity_checker(inquiry, mode=None):
         else:
             print(float_error)
             continue
+
+        # Make sure that -ve numbers aren't entered
+        if amount < 0:
+            print(negative_error)
+            continue
+
 
         # Remove the value from the unit
         unit_raw = inpt.replace(str(amount_raw[0]), "").strip()
@@ -156,6 +166,74 @@ def quantity_checker(inquiry, mode=None):
         return float(amount), unit
 
     # explicit return statement to avoid PEP8 error when we use 'continue' in the else statement above.
+    return None
+
+def conversion_calculator(quantity_per_product, product_unit, thing):
+    """This takes in the quantity per product and the first unit
+    and converts it to the final unit that it asks for."""
+
+    # Avoid errors.
+    product_unit_dictionary = {}
+
+    # Finds the dictionary to use.
+    if product_unit in mass_dict:
+        product_unit_dictionary = mass_dict
+
+    elif product_unit in volume_dict:
+        product_unit_dictionary = volume_dict
+
+    elif product_unit in distance_dict:
+        product_unit_dictionary = distance_dict
+
+    # If the user doesn't enter a unit, let the function continue.
+    elif product_unit == "":
+        product_unit_dictionary = {}
+
+    # Error if somehow the product unit is invalid. This should never be triggered.
+    else:
+        print(f"🚨 CODE ERROR - LINE 124: Product unit: {product_unit}, is not a valid unit. 🚨")
+
+    # Loop until the user enters a valid answer for "What is the container size for {resource}? "
+    while True:
+
+        # Asks the user for the container size of the product
+        print(f"What is the container size that {thing} is bought in? ")
+        # This is a list ⬇. amount{float} = [0], unit{str} = [1]. It finds the amount and unit for the container size.
+        container_size_data = quantity_checker("SIZE: ")
+
+        # Separate container_size_data into value and unit.
+        container_size_value = container_size_data[0]
+        container_size_unit = container_size_data[1]
+
+
+        # Makes sure that the container size unit is in the same dictionary as the product unit.
+        if container_size_unit not in product_unit_dictionary and container_size_unit != product_unit:
+            print(f"🚨 ERROR: The unit {container_size_unit} is not of the same unit type as {product_unit}. 🚨")
+            continue
+
+        # If the container size unit and the product unit are the same, skip the conversion.
+        elif container_size_unit == product_unit:
+            quantity_per_product_in_unit = quantity_per_product
+            print("Skipping conversion...")
+
+
+        # This is a small status update.
+        else:
+            print("Converting...")
+
+            # quantity_per_product -> container size unit. This does the conversion.
+            # Converts the quantity per product to the standard unit (where one is in the dictionary).
+            quantity_per_product_standard_unit = quantity_per_product * product_unit_dictionary[product_unit]
+            # quantity_per_product{float} * product_unit_dictionary[container_size_unit{str}]{float}
+            quantity_per_product_in_unit = quantity_per_product_standard_unit / product_unit_dictionary[container_size_unit]
+
+            print(f"Quantity per product standard unit = {quantity_per_product_standard_unit} = {quantity_per_product} * {product_unit_dictionary[product_unit]} | product_unit = {product_unit}")
+            print(f"Quantity per product in unit = {quantity_per_product_in_unit} = {quantity_per_product_standard_unit} / {product_unit_dictionary[container_size_unit]} | container_size_unit = {container_size_unit}")
+
+        # Returns container_size_data {tuple (amount{float}, unit{str})} and quantity_per_product_in_unit{float}.
+        return container_size_data, quantity_per_product_in_unit
+
+    # Explict return none because of a weird error.
     return None
 
 
@@ -220,9 +298,12 @@ while exit_code != "":
 
 
 # Set up the list for the amount of resource needed per product. I need this to avoid errors. Tuples{No}. amount_per_product{int}
-amount_per_product = []
+required_resource_amount = []
 # Set up the list for the unit of resource needed per product. I need this to avoid errors. Tuples{No}. required_resource{str}
 required_resource_unit = []
+# Set up a list for the final panda that is both amount and unit together in  a string.
+required_resource_amount_plus_unit = []
+
 
 # Looking for the amount of each resource required per product.
 for resource in required_resources:
@@ -234,20 +315,97 @@ for resource in required_resources:
     resource_quantity_data = quantity_checker(f"AMOUNT: ")
 
     # This finds out how much of the resource is required for one product and adds it to the list. amount{float}/per_batch{int}
-    amount_per_product.append(resource_quantity_data[0]/per_batch)
+    required_resource_amount.append(resource_quantity_data[0] / per_batch)
     # This finds out the unit of the resource needed and adds it to a list. unit{str}
     required_resource_unit.append(resource_quantity_data[1])
+    # This adds the amount and unit together for a list for the panda
+    required_resource_amount_plus_unit.append(f"{resource_quantity_data[0]}{resource_quantity_data[1]}")
 
 # Spacer between the "how much" question and the Part 2 header.
 print()
 # A simple header for Part 2 of the program.
 print(statement_generator("Part 2", "🎬"))
 
-# We need to find the
+
+
+# Set up the lists for the next for item loop
+buying_quantity = []
+buying_unit = []
+required_quantity_in_buying_unit = []
+cost_per_container = []
+
+# We need to find the container size and cost.
+for resource in required_resources:
+    # Finds the common index. Will find the index for the resource that it is up to in the lists.
+    required_resource_index = required_resources.index(resource)
+    # This is a list ⬇. tuple{(buying quantity{float} = [0], buying unit{str} = [1])}, required quantity in the buying unit{float}. Finds the buying quantities, buying unit, and required quantity in the buying unit.
+    container_data = conversion_calculator(required_resource_amount[required_resource_index], required_resource_unit[required_resource_index], resource)
+
+    # Separates the container data into buying quantity{float}, buying unit{str}, and required quantity in the buying unit{float}
+    buying_quantity.append(container_data[0][0])
+    buying_unit.append(container_data[0][1])
+    required_quantity_in_buying_unit.append(container_data[1])
+
+    # Asks the user how much it will cost per container of blah
+    cost_per_container.append(int_checker(f"How much will it cost to buy {buying_quantity[required_resource_index]}{buying_unit[required_resource_index]} of {resource} (please enter answer in dollars)? ", float))
+
+
+
+# Required resources.
+# Amount and unit per batch.
+
+# This is the list for the fraction of the buying quantity that the amount per product is.
+fraction_of_buying_quantity_per_product = []
+cost_per_product = []
+amount_you_will_need_to_use = []
+cost_of_amount_you_will_need_to_use = []
+need_to_buy = []
+need_to_buy_string = []
+cost_to_buy = []
+
+for resource in required_resources:
+    # Finds the common index. Will find the index for the resource that it is up to in the lists.
+    required_resource_index = required_resources.index(resource)
+
+    # Value of material per product.
+    # This is the fraction of the buying quantity that the amount per product is.
+    # required_resource_amount / buying_quantity = fraction_of_buying_quantity_per_product
+    fraction_of_buying_quantity_per_product.append(required_quantity_in_buying_unit[required_resource_index] / buying_quantity[required_resource_index])
+
+    # Finds out how much it costs for the material blah to make one product.
+    cost_per_product = cost_per_container[required_resource_index] * fraction_of_buying_quantity_per_product[required_resource_index]
+
+    # Amount of material that the user will need to use.
+    # This multiplies the amount of resources for one product by the amount of product wanted
+    amount_you_will_need_to_use.append(required_resource_amount[required_resource_index] * product_count)
+
+    cost_of_amount_you_will_need_to_use.append()
 
 
 
 
 
+    # Amount that the user will need to buy.
+    # This finds out how much material the user will need to use in the unit that it is bought in.
+    amount_you_will_need_to_use_in_unit = required_quantity_in_buying_unit[required_resource_index] * product_count
+    # This finds out the amount that the user will need to buy
+    # by dividing that amount needed to be used by the buying quantity.
+    need_to_buy.append(math.ceil(amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index]))
+    # This converts the need_to_buy into a string for the dictionary so that I can change the format.
+    need_to_buy_string.append(f"{math.ceil(amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index])} x {buying_quantity}{buying_unit}")
+
+    # How much it will cost to buy all the materials.
+    cost_to_buy.append(f"{need_to_buy} x {cost_per_container * need_to_buy}")
+
+panda_dict = {
+    'Resource': required_resources,
+    'Amount Per Batch': required_resource_amount_plus_unit,
+    'You will need to use (for 1 product)': required_resource_amount,
+    'Cost for materials for 1 product': cost_per_product,
+    f'You will need to use (for {product_count} product)': amount_you_will_need_to_use,
+    f'Cost for materials for {product_count} product': cost_per_product,
+
+
+}
 
 
