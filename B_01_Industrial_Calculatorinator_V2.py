@@ -355,7 +355,6 @@ for resource in required_resources:
 # Amount and unit per batch.
 
 # This is the list for the fraction of the buying quantity that the amount per product is.
-fraction_of_buying_quantity_per_product = []
 cost_per_product = []
 amount_you_will_need_to_use = []
 cost_of_amount_you_will_need_to_use = []
@@ -370,42 +369,48 @@ for resource in required_resources:
     # Value of material per product.
     # This is the fraction of the buying quantity that the amount per product is.
     # required_resource_amount / buying_quantity = fraction_of_buying_quantity_per_product
-    fraction_of_buying_quantity_per_product.append(required_quantity_in_buying_unit[required_resource_index] / buying_quantity[required_resource_index])
+    fraction_of_buying_quantity_per_product = required_quantity_in_buying_unit[required_resource_index] / buying_quantity[required_resource_index]
 
     # Finds out how much it costs for the material blah to make one product.
-    cost_per_product = cost_per_container[required_resource_index] * fraction_of_buying_quantity_per_product[required_resource_index]
+    cost_per_product.append(cost_per_container[required_resource_index] * fraction_of_buying_quantity_per_product)
 
     # Amount of material that the user will need to use.
     # This multiplies the amount of resources for one product by the amount of product wanted
     amount_you_will_need_to_use.append(required_resource_amount[required_resource_index] * product_count)
 
-    cost_of_amount_you_will_need_to_use.append()
-
-
-
-
 
     # Amount that the user will need to buy.
     # This finds out how much material the user will need to use in the unit that it is bought in.
     amount_you_will_need_to_use_in_unit = required_quantity_in_buying_unit[required_resource_index] * product_count
+
+    # Finds out the cost of material you will need to use.
+    fraction_of_buying_quantity_for_neet_to_use = amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index]
+    cost_of_amount_you_will_need_to_use.append(cost_per_container[required_resource_index] * fraction_of_buying_quantity_for_neet_to_use)
+
     # This finds out the amount that the user will need to buy
     # by dividing that amount needed to be used by the buying quantity.
     need_to_buy.append(math.ceil(amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index]))
     # This converts the need_to_buy into a string for the dictionary so that I can change the format.
-    need_to_buy_string.append(f"{math.ceil(amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index])} x {buying_quantity}{buying_unit}")
+    need_to_buy_string.append(f"{math.ceil(amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index])} x {buying_quantity[required_resource_index]}{buying_unit[required_resource_index]}")
 
     # How much it will cost to buy all the materials.
-    cost_to_buy.append(f"{need_to_buy} x {cost_per_container * need_to_buy}")
+    cost_to_buy.append(need_to_buy[required_resource_index] * cost_per_container[required_resource_index])
 
+# Dictionary for Panda
 panda_dict = {
     'Resource': required_resources,
     'Amount Per Batch': required_resource_amount_plus_unit,
-    'You will need to use (for 1 product)': required_resource_amount,
-    'Cost for materials for 1 product': cost_per_product,
-    f'You will need to use (for {product_count} product)': amount_you_will_need_to_use,
-    f'Cost for materials for {product_count} product': cost_per_product,
-
-
+    'You will need\nto use\n(for 1 product)': required_resource_amount,
+    'Cost for materials\nfor 1 product': cost_per_product,
+    f'Amount of material you\nwill need to use\nfor {product_count} product/s': amount_you_will_need_to_use,
+    f'Cost of material for {product_count} product/s': cost_of_amount_you_will_need_to_use,
+    'Amount of containers of\nmaterial that you will\nneed to buy': need_to_buy_string,
+    'Cost to buy containers\nof material': cost_to_buy,
 }
 
+# Makes the Panda frame
+frame = pandas.DataFrame(panda_dict)
+# Makes the panda frame a string
+frame_string = tabulate(frame, headers="keys", tablefmt="psql")
 
+print(frame_string)
