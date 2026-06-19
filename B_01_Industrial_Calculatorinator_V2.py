@@ -227,14 +227,14 @@ def conversion_calculator(quantity_per_product, product_unit, thing):
             # quantity_per_product{float} * product_unit_dictionary[container_size_unit{str}]{float}
             quantity_per_product_in_unit = quantity_per_product_standard_unit / product_unit_dictionary[container_size_unit]
 
-            print(f"Quantity per product standard unit = {quantity_per_product_standard_unit} = {quantity_per_product} * {product_unit_dictionary[product_unit]} | product_unit = {product_unit}")
-            print(f"Quantity per product in unit = {quantity_per_product_in_unit} = {quantity_per_product_standard_unit} / {product_unit_dictionary[container_size_unit]} | container_size_unit = {container_size_unit}")
-
         # Returns container_size_data {tuple (amount{float}, unit{str})} and quantity_per_product_in_unit{float}.
         return container_size_data, quantity_per_product_in_unit
 
     # Explict return none because of a weird error.
     return None
+
+def currency(value):
+    return "${:.2f}".format(value)
 
 
 # Main Routine.
@@ -361,6 +361,7 @@ cost_of_amount_you_will_need_to_use = []
 need_to_buy = []
 need_to_buy_string = []
 cost_to_buy = []
+required_resource_amount_plus_unit_per_product = []
 
 for resource in required_resources:
     # Finds the common index. Will find the index for the resource that it is up to in the lists.
@@ -372,11 +373,11 @@ for resource in required_resources:
     fraction_of_buying_quantity_per_product = required_quantity_in_buying_unit[required_resource_index] / buying_quantity[required_resource_index]
 
     # Finds out how much it costs for the material blah to make one product.
-    cost_per_product.append(cost_per_container[required_resource_index] * fraction_of_buying_quantity_per_product)
+    cost_per_product.append(f"{currency(cost_per_container[required_resource_index] * fraction_of_buying_quantity_per_product)}")
 
     # Amount of material that the user will need to use.
     # This multiplies the amount of resources for one product by the amount of product wanted
-    amount_you_will_need_to_use.append(required_resource_amount[required_resource_index] * product_count)
+    amount_you_will_need_to_use.append(f"{required_resource_amount[required_resource_index] * product_count}{required_resource_unit[required_resource_index]}")
 
 
     # Amount that the user will need to buy.
@@ -385,7 +386,7 @@ for resource in required_resources:
 
     # Finds out the cost of material you will need to use.
     fraction_of_buying_quantity_for_neet_to_use = amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index]
-    cost_of_amount_you_will_need_to_use.append(cost_per_container[required_resource_index] * fraction_of_buying_quantity_for_neet_to_use)
+    cost_of_amount_you_will_need_to_use.append(f"{currency(cost_per_container[required_resource_index] * fraction_of_buying_quantity_for_neet_to_use)}")
 
     # This finds out the amount that the user will need to buy
     # by dividing that amount needed to be used by the buying quantity.
@@ -394,23 +395,34 @@ for resource in required_resources:
     need_to_buy_string.append(f"{math.ceil(amount_you_will_need_to_use_in_unit / buying_quantity[required_resource_index])} x {buying_quantity[required_resource_index]}{buying_unit[required_resource_index]}")
 
     # How much it will cost to buy all the materials.
-    cost_to_buy.append(need_to_buy[required_resource_index] * cost_per_container[required_resource_index])
+    cost_to_buy.append(f"{currency(need_to_buy[required_resource_index] * cost_per_container[required_resource_index])}")
+
+    # Flipping annoying thing because some egg (me) decided that units are important. Adds the unit back onto the required resource amount.
+    required_resource_amount_plus_unit_per_product = f"{required_resource_amount[required_resource_index]}{required_resource_unit[required_resource_index]}"
 
 # Dictionary for Panda
 panda_dict = {
     'Resource': required_resources,
     'Amount Per Batch': required_resource_amount_plus_unit,
-    'You will need\nto use\n(for 1 product)': required_resource_amount,
+    'You will need\nto use\n(for 1 product)': required_resource_amount_plus_unit_per_product,
     'Cost for materials\nfor 1 product': cost_per_product,
     f'Amount of material you\nwill need to use\nfor {product_count} product/s': amount_you_will_need_to_use,
-    f'Cost of material for {product_count} product/s': cost_of_amount_you_will_need_to_use,
+    f'Cost of material for\n{product_count} product/s': cost_of_amount_you_will_need_to_use,
     'Amount of containers of\nmaterial that you will\nneed to buy': need_to_buy_string,
     'Cost to buy containers\nof material': cost_to_buy,
 }
 
 # Makes the Panda frame
 frame = pandas.DataFrame(panda_dict)
-# Makes the panda frame a string
-frame_string = tabulate(frame, headers="keys", tablefmt="psql")
+
+# Asks the user if they want a simple or complex rundown
+simple_complex = yes_no("Would you like a complex rundown of the data? ")
+
+if simple_complex == "yes":
+    # Makes the panda frame a string
+    frame_string = tabulate(frame, headers="keys", tablefmt="psql", showindex=False, colalign=("left", "right", "right", "right", "right", "right", "right"))
+else:
+    # Makes the panda frame a string
+    frame_string = tabulate(frame['Resource',  f'Amount of material you\nwill need to use\nfor {product_count} product/s',  f'Cost of material for\n{product_count} product/s', 'Amount of containers of\nmaterial that you will\nneed to buy'], headers="keys", tablefmt="psql", showindex=False, colalign=("left", "right", "right", "right", "right", "right", "right"))
 
 print(frame_string)
