@@ -1,7 +1,9 @@
 import re
 import math
+import time
 import pandas
 from tabulate import tabulate
+from tqdm import tqdm
 
 
 
@@ -123,7 +125,6 @@ def quantity_checker(inquiry, mode=None):
         # Make sure there is a number entered.
         if len(amount_raw) == 1:
             amount = float(amount_raw[0])
-            print(amount)
 
         # Number error if too many numbers are entered
         elif len(amount_raw) > 1:
@@ -191,13 +192,13 @@ def conversion_calculator(quantity_per_product, product_unit, thing):
 
     # Error if somehow the product unit is invalid. This should never be triggered.
     else:
-        print(f"🚨 CODE ERROR - LINE 124: Product unit: {product_unit}, is not a valid unit. 🚨")
+        print(f"🚨 CODE ERROR - LINE 124: Product unit: {product_unit}, is not a valid unit. 🚨\n")
 
     # Loop until the user enters a valid answer for "What is the container size for {resource}? "
     while True:
 
         # Asks the user for the container size of the product
-        print(f"What is the container size that {thing} is bought in? ")
+        print(f"\nWhat is the container size that {thing} is bought in? ")
         # This is a list ⬇. amount{float} = [0], unit{str} = [1]. It finds the amount and unit for the container size.
         container_size_data = quantity_checker("SIZE: ")
 
@@ -208,18 +209,18 @@ def conversion_calculator(quantity_per_product, product_unit, thing):
 
         # Makes sure that the container size unit is in the same dictionary as the product unit.
         if container_size_unit not in product_unit_dictionary and container_size_unit != product_unit:
-            print(f"🚨 ERROR: The unit {container_size_unit} is not of the same unit type as {product_unit}. 🚨")
+            print(f"🚨 ERROR: The unit {container_size_unit} is not of the same unit type as {product_unit}. 🚨\n")
             continue
 
         # If the container size unit and the product unit are the same, skip the conversion.
         elif container_size_unit == product_unit:
             quantity_per_product_in_unit = quantity_per_product
-            print("Skipping conversion...")
+            print("Skipping conversion...\n")
 
 
         # This is a small status update.
         else:
-            print("Converting...")
+            print("Converting...\n")
 
             # quantity_per_product -> container size unit. This does the conversion.
             # Converts the quantity per product to the standard unit (where one is in the dictionary).
@@ -418,11 +419,30 @@ frame = pandas.DataFrame(panda_dict)
 # Asks the user if they want a simple or complex rundown
 simple_complex = yes_no("Would you like a complex rundown of the data? ")
 
-if simple_complex == "yes":
-    # Makes the panda frame a string
-    frame_string = tabulate(frame, headers="keys", tablefmt="psql", showindex=False, colalign=("left", "right", "right", "right", "right", "right", "right"))
-else:
-    # Makes the panda frame a string
-    frame_string = tabulate(frame['Resource',  f'Amount of material you\nwill need to use\nfor {product_count} product/s',  f'Cost of material for\n{product_count} product/s', 'Amount of containers of\nmaterial that you will\nneed to buy'], headers="keys", tablefmt="psql", showindex=False, colalign=("left", "right", "right", "right", "right", "right", "right"))
+# Makes the panda frame a string
+frame_string_complex = tabulate(frame, headers="keys", tablefmt="psql", showindex=False, colalign=("left", "right", "right", "right", "right", "right", "right"))
 
-print(frame_string)
+
+if simple_complex != "yes":
+    # Makes the panda frame a string
+    frame_string_simple = tabulate(frame[['Resource', f'Amount of material you\nwill need to use\nfor {product_count} product/s', f'Cost of material for\n{product_count} product/s', 'Amount of containers of\nmaterial that you will\nneed to buy']], headers="keys", tablefmt="psql", showindex=False, colalign=("left", "right", "right", "right", "right", "right", "right"))
+    # Displays
+    print(frame_string_simple)
+else:
+    # Displays
+    print(frame_string_complex)
+
+total_cost_to_buy = 0
+
+for item_raw in tqdm(frame['Cost to buy containers\nof material']):
+    item = item_raw.strip('$')
+    total_cost_to_buy += float(item)
+    time.sleep(0.1)
+
+print(total_cost_to_buy)
+
+
+
+
+
+
