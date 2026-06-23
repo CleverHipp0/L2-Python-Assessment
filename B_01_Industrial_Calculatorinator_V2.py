@@ -82,7 +82,7 @@ def int_checker(question, int_float=int, exit_c=""):
 
     while True:
         # Strips unnecessary character
-        result = input(question).strip(r"\ ")
+        result = input(question).strip(r"$\ ")
 
         # If the exit code is entered, exit.
         if result == exit_c and result != "":
@@ -237,6 +237,18 @@ def conversion_calculator(quantity_per_product, product_unit, thing):
 def currency(value):
     return "${:.2f}".format(value)
 
+def loading(dictionary_column):
+    """Iterates through a column in a table with a loading bar and gets the sum of the column"""
+
+    # Set up the variable so that there are no errors
+    final_answer = 0
+    # TQDM makes a nice loading bar
+    for item_raw in tqdm(frame[dictionary_column]):
+        item = item_raw.strip('$')
+        final_answer += float(item)
+        time.sleep(0.1)
+
+    return final_answer
 
 # Main Routine.
 # Generates the title as a string.
@@ -245,11 +257,33 @@ print(f"\n{heading}\n")
 
 # Asks the user if they would like to skip the instructions.
 skip_instructions = yes_no("Would you like to skip the instructions? ")
-if skip_instructions == "n":
-    print('''Instructions
-blah
-blah
-blah
+if skip_instructions == "no":
+    statement_generator("Instructions", "ℹ️")
+    print('''
+1. Enter how many products a singular batch makes.
+This should be a positive number more than 0.
+
+2. Enter how many PRODUCTS you want. NOT batches.
+
+3. Enter the name of one of the resources.
+
+4. Repeat step 3 for all of the resources you need.
+
+5. Enter how much of the prompted resource that you need.
+
+6. Repeat step 5 for all of the resources you need.
+
+7. Enter the amount that you buy the resource in.
+
+8. Enter the cost to buy the amount in step 7.
+
+9. Repeat step 7-8 for all of the resources you need.
+
+10. Choose if you want a simple or complex rundown.
+
+11. Choose if you would like to write to file.
+
+12. Have a good rest of your day!
 ''')
 
 # Asks the user how many products are in one batch. per_batch{int}
@@ -349,7 +383,7 @@ for resource in required_resources:
 
     # Asks the user how much it will cost per container of blah
     cost_per_container.append(int_checker(f"How much will it cost to buy {buying_quantity[required_resource_index]}{buying_unit[required_resource_index]} of {resource} (please enter answer in dollars)? ", float))
-
+    print()
 
 
 # Required resources.
@@ -432,17 +466,31 @@ else:
     # Displays
     print(frame_string_complex)
 
-total_cost_to_buy = 0
+# Status update
+print("Calculating...")
 
-for item_raw in tqdm(frame['Cost to buy containers\nof material']):
-    item = item_raw.strip('$')
-    total_cost_to_buy += float(item)
-    time.sleep(0.1)
+# Final stats
+total_cost_one_product = loading('Cost for materials\nfor 1 product')
+total_cost_of_material = loading(f'Cost of material for\n{product_count} product/s')
+total_cost_to_buy = loading('Cost to buy containers\nof material')
 
-print(total_cost_to_buy)
+print()
+final_stats = [f"Total to buy all of the materials: ${total_cost_to_buy}", f"Total cost to make {product_count} product/s: ${total_cost_of_material}", f"Total cost to make 1 product: ${total_cost_one_product}"]
+for stat in final_stats:
+    print(stat)
 
+like_to_write = yes_no("Would you like this written to file? ")
 
+if like_to_write == "yes":
+    final_stats.append(frame_string_complex)
 
+    # Make the text file
+    write_to = "{}.txt".format("Industrial_Calculatorinator_Write_File")
+    # Open the text file
+    text_file = open(write_to, "w+")
 
+    for a in final_stats:
+        text_file.write(a)
+        text_file.write("\n")
 
-
+print("Thank you for using the Industrial Calculatorinator!")
