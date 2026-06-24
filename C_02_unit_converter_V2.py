@@ -178,5 +178,5 @@ def conversion_calculator(quantity_per_product, product_unit, resource):
 while True:
 
     test_resource = input("Resource: ")
-    test_data = quantity_checker("Test Case: ")
+    test_data = quantity_checker("Test Amount: ")
     print(conversion_calculator(test_data[0], test_data[1], test_resource))

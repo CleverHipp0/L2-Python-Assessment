@@ -28,7 +28,6 @@ mega_dictionary = distance_dict | volume_dict | mass_dict | currency_dict
 
 while True:
     initial = input("Initial: ").lower()
-    final = input("Final: ").lower()
 
     # Avoid errors.
     dictionary = {}
@@ -47,8 +46,10 @@ while True:
         dictionary = currency_dict
 
     else:
-        print("FAIL: P1")
+        print("Invalid Unit")
         continue
+
+    final = input("Final: ").lower()
 
     # Makes sure both units are in the same dictionary.
     if final not in dictionary:
@@ -59,7 +60,7 @@ while True:
         print("Awesome")
 
     # Conversion amount.
-    amount_a = float(input("A: "))
+    amount_a = abs(float(input("Number: ")))
 
     # Does the conversion.
     modifier = dictionary[initial] / dictionary[final]

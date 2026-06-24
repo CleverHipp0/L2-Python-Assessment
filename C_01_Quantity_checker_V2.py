@@ -1,5 +1,7 @@
 import re
 
+from numpy.ma.core import negative
+
 # Dictionaries
 # Mass (standard kg)
 
@@ -54,6 +56,7 @@ def quantity_checker(inquiry):
     unit_error = "🚨 ERROR: This unit is not supported. Please enter a valid unit from this list. 🚨"
     float_error = "🚨 ERROR: No Number was entered. Make sure to enter a number. 🚨"
     number_error = "🚨 ERROR: Too Many Numbers were entered. Make sure there are no spaces between numbers. 🚨"
+    negative_error = "🚨 ERROR: You entered a negative number. Please do not enter negative numbers, my teacher gets mad. 🚨"
 
     # THIS WORKS DO NOT TOUCH
     # Finds the digits within the input.
@@ -68,7 +71,7 @@ def quantity_checker(inquiry):
 
         # Make sure there is a number entered.
         if len(amount_raw) == 1:
-            amount = abs(float(amount_raw[0]))
+            amount = float(amount_raw[0])
             print(amount)
 
         # Number error if too many numbers are entered
@@ -80,8 +83,9 @@ def quantity_checker(inquiry):
             print(float_error)
             continue
 
-        # Number error if too many numbers are entered
-
+        # Make sure that -ve numbers aren't entered
+        if amount < 0:
+            print()
 
 
         # Remove the value from the unit

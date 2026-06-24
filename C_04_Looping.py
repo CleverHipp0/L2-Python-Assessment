@@ -18,6 +18,7 @@ required_resources = []
 while True:
 
     # Asks the question to loop.
+    print()
     print("Please enter the resource or enter 'xxx' to quit.")
     new_resource = not_blank("ADD: ").lower().strip(r"\ ")
 
