@@ -287,7 +287,7 @@ This should be a positive number more than 0.
 ''')
 
 # Asks the user how many products are in one batch. per_batch{int}
-per_batch = int_checker("\nHow many products does one batch make? ")
+per_batch = int_checker("\nHow many products does one batch make? ", float)
 
 # Asks the user how many products they would like to make. per_batch{int}
 product_count = int_checker("How many products would you like to make? ")
@@ -439,7 +439,7 @@ for resource in required_resources:
 panda_dict = {
     'Resource': required_resources,
     'Amount Per Batch': required_resource_amount_plus_unit,
-    'You will need\nto use\n(for 1 product)': required_resource_amount_plus_unit_per_product,
+    'You will need\nto use\nfor 1 product': required_resource_amount_plus_unit_per_product,
     'Cost for materials\nfor 1 product': cost_per_product,
     f'Amount of material you\nwill need to use\nfor {product_count} product/s': amount_you_will_need_to_use,
     f'Cost of material for\n{product_count} product/s': cost_of_amount_you_will_need_to_use,
