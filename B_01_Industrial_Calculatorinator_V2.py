@@ -173,10 +173,10 @@ def conversion_calculator(quantity_per_product, product_unit, thing):
     """This takes in the quantity per product and the first unit
     and converts it to the final unit that it asks for."""
 
-    # Avoid errors.
+    # Avoid errors by setting up a dictionary at the start.
     product_unit_dictionary = {}
 
-    # Finds the dictionary to use.
+    # Finds the correct dictionary to use.
     if product_unit in mass_dict:
         product_unit_dictionary = mass_dict
 
@@ -203,7 +203,6 @@ def conversion_calculator(quantity_per_product, product_unit, thing):
         container_size_data = quantity_checker("SIZE: ")
 
         # Separate container_size_data into value and unit.
-        container_size_value = container_size_data[0]
         container_size_unit = container_size_data[1]
 
 
@@ -470,6 +469,7 @@ else:
 print("Calculating...")
 
 # Final stats
+# Creates loading bars while calculating the final stats.
 total_cost_one_product = loading('Cost for materials\nfor 1 product')
 total_cost_of_material = loading(f'Cost of material for\n{product_count} product/s')
 total_cost_to_buy = loading('Cost to buy containers\nof material')
@@ -479,8 +479,10 @@ final_stats = [f"Total to buy all of the materials: ${total_cost_to_buy}", f"Tot
 for stat in final_stats:
     print(stat)
 
+# Asks the user if they would like it written to file.
 like_to_write = yes_no("Would you like this written to file? ")
 
+# Write to file if they want.
 if like_to_write == "yes":
     final_stats.append(frame_string_complex)
 
@@ -489,8 +491,10 @@ if like_to_write == "yes":
     # Open the text file
     text_file = open(write_to, "w+")
 
+    # Write to file
     for a in final_stats:
         text_file.write(a)
         text_file.write("\n")
 
+# Farewell
 print("Thank you for using the Industrial Calculatorinator!")
